@@ -1,3 +1,5 @@
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 
 public class Main {
@@ -27,9 +29,9 @@ public class Main {
     static final int SERVICE_PROFIT_YUK_TRENI=50000;
 
     static final String ROUTE_HIZ_TRENI="ABCDEFO";
-    static final String ROUTE_ANAHAT_TRENI="NKPRDSp";
+    static final String ROUTE_ANAHAT_TRENI="NKPRDSX";
     static final String ROUTE_YUK_TRENI="GHIFJKL";
-
+    static Graph graph;
 
     public static void main(String[] args) {
 
@@ -64,204 +66,92 @@ public class Main {
             System.exit(0);
         }
         ArrayList<Train> trains=new ArrayList<>();
+        ArrayList<Train> trains_yuk=new ArrayList<>();
+        ArrayList<Train> trains_ana=new ArrayList<>();
+        ArrayList<Train> trains_hiz=new ArrayList<>();
         for(int i=0;i<num_of_hiz_treni;i++){
-            trains.add(new Train(0,"HT-"+i+1,'A',true));
+            trains_hiz.add(new Train(0,"HT-"+i+1,'A',true));
+        }
+        if (trains_hiz.size()>1){
+            for (int i=1;i<trains_hiz.size()-1;i++){
+                trains_hiz.get(i).next=trains_hiz.get(i+1);
+                trains_hiz.get(i).prev=trains_hiz.get(i-1);
+            }
+            trains_hiz.get(0).next=trains_hiz.get(1);
+            trains_hiz.get(0).prev=trains_hiz.get(trains_hiz.size()-1);
+            trains_hiz.get(trains_hiz.size()-1).next=trains_hiz.get(0);
+            trains_hiz.get(trains_hiz.size()-1).prev=trains_hiz.get(trains_hiz.size()-2);
+        }
+            else if (trains_hiz.size()==1){
+                trains_hiz.get(0).next=trains_hiz.get(0);
+                trains_hiz.get(0).prev=trains_hiz.get(0);
         }
 
-        Station stationA=new Station('A');
-        Station stationB=new Station('B');
-        Station stationC=new Station('C');
-        Station stationD=new Station('D');
-        Station stationE=new Station('E');
-        Station stationF=new Station('F');
-        Station stationO=new Station('O');
 
-        Graph graph = new Graph();
-        stationA.addEdge(new Rail(stationB, 100)); //connect v1 v2
-        stationB.addEdge(new Rail(stationA, 100));
+        for(int i=0;i<num_of_anahat_treni;i++){
+            trains_ana.add(new Train(1,"AT-"+i+1,'N',true));
+        }
+        if (trains_ana.size()>1){
+            for (int i=1;i<trains_ana.size()-1;i++){
+                trains_ana.get(i).next=trains_ana.get(i+1);
+                trains_ana.get(i).prev=trains_ana.get(i-1);
+            }
+            trains_ana.get(0).next=trains_ana.get(1);
+            trains_ana.get(0).prev=trains_ana.get(trains_ana.size()-1);
+            trains_ana.get(trains_ana.size()-1).next=trains_ana.get(0);
+            trains_ana.get(trains_ana.size()-1).prev=trains_ana.get(trains_ana.size()-2);
+        }
+        else if (trains_ana.size()==1){
+            trains_ana.get(0).next=trains_ana.get(0);
+            trains_ana.get(0).prev=trains_ana.get(0);
+        }
 
-        stationB.addEdge(new Rail(stationC, 75)); //connect v2 v3
-        stationC.addEdge(new Rail(stationB, 75));
 
-        stationC.addEdge(new Rail(stationD, 100)); //connect v2 v4
-        stationD.addEdge(new Rail(stationC, 100));
+        for(int i=0;i<num_of_yuk_treni;i++){
+            trains_yuk.add(new Train(2,"YT-"+i+1,'G',true));
+        }
+        if (trains_yuk.size()>1){
+            for (int i=1;i<trains_yuk.size()-1;i++){
+                trains_yuk.get(i).next=trains_yuk.get(i+1);
+                trains_yuk.get(i).prev=trains_yuk.get(i-1);
+            }
+            trains_yuk.get(0).next=trains_yuk.get(1);
+            trains_yuk.get(0).prev=trains_yuk.get(trains_yuk.size()-1);
+            trains_yuk.get(trains_yuk.size()-1).next=trains_yuk.get(0);
+            trains_yuk.get(trains_yuk.size()-1).prev=trains_yuk.get(trains_yuk.size()-2);
+        }
+        else if (trains_yuk.size()==1){
+            trains_yuk.get(0).next=trains_yuk.get(0);
+            trains_yuk.get(0).prev=trains_yuk.get(0);
+        }
 
-        stationD.addEdge(new Rail(stationE, 75)); //connect v4 v5
-        stationE.addEdge(new Rail(stationD, 75));
+        trains.addAll(trains_hiz);
+        trains.addAll(trains_ana);
+        trains.addAll(trains_yuk);
+        createGraph();
 
-        stationE.addEdge(new Rail(stationF, 75)); //connect v4 v5
-        stationF.addEdge(new Rail(stationE, 75));
-
-        stationF.addEdge(new Rail(stationO, 25)); //connect v4 v5
-        stationO.addEdge(new Rail(stationF, 25));
-
-        graph.addVertex(stationA);
-        graph.addVertex(stationB);
-        graph.addVertex(stationC);
-        graph.addVertex(stationD);
-        graph.addVertex(stationE);
-        graph.addVertex(stationF);
-        graph.addVertex(stationO);
 
         for (Station st:graph.getVertices()
              ) {
             System.out.println(st.name);
-
             for (Rail edge : st.getEdges()) {
                 System.out.println(edge.to.name);
                 System.out.println(edge.weight);
             }
             System.out.println();
-
         }
         for (int i=0;i<gun*24*60;i++){
             for (Train train:trains) {
-
                     if(train.mode==2 ){
-
-                        if (train.maintenance_remaining_time<=0 && graph.getStation(train.waiting_station_name).current_train==null) {
-                            train.working = true;
-                            //graph.getStation(train.waiting_station_name).current_train = train;
-                            int index;
-                            train.mode=0;
-
-
-                        }
-                        else {
-                            train.maintenance_remaining_time=train.maintenance_remaining_time-1;
-                            System.out.println("mainbekleme"+train.maintenance_remaining_time);
-
-                        }
+                        mode2(train);
                     } else if (train.mode==1) {
-                        if (train.service_remaining_time<=0){//yola çıkıcak
-                            train.working = true;
-                            graph.getStation(train.waiting_station_name).current_train = null;
-                            int index;
-                            char next_station_name = 0;
-                            switch (train.type){
-                                case 0:
-                                    index=ROUTE_HIZ_TRENI.indexOf(train.waiting_station_name);
-                                    if ((index==0 && !train.direction) || (index==ROUTE_HIZ_TRENI.length()-1 && train.direction)){
-                                        train.maintenance_remaining_time=120;
-                                        train.mode=2;
-                                        train.direction=!train.direction;
-                                        System.out.println("mode2");
-
-                                        next_station_name=ROUTE_HIZ_TRENI.charAt(train.direction?index+1:index-1);
-                                        System.out.println(next_station_name);
-                                    }
-
-                                    else{
-                                        System.out.println("char"+ROUTE_HIZ_TRENI.charAt(train.direction?index+1:index-1));
-                                        next_station_name=ROUTE_HIZ_TRENI.charAt(train.direction?index+1:index-1);
-                                        train.mode=0;
-                                    }
-                                    break;
-                                case 1:
-                                    index=ROUTE_ANAHAT_TRENI.indexOf(train.waiting_station_name);
-                                    if ((index==0 && !train.direction) || (index==ROUTE_ANAHAT_TRENI.length()-1 && train.direction)) {
-                                        train.maintenance_remaining_time = 240;
-                                        train.mode = 2;
-                                        train.direction=!train.direction;
-
-                                        next_station_name=ROUTE_ANAHAT_TRENI.charAt(train.direction?index+1:index-1);
-                                        System.out.println(next_station_name);                                    }
-                                    else{
-                                            System.out.println("char"+ROUTE_ANAHAT_TRENI.charAt(train.direction?index+1:index-1));
-                                            next_station_name=ROUTE_ANAHAT_TRENI.charAt(train.direction?index+1:index-1);
-                                        train.mode=0;
-                                        }
-                                    break;
-
-                                case 2:
-                                    index=ROUTE_YUK_TRENI.indexOf(train.waiting_station_name);
-                                    if ((index==0 && !train.direction) || (index==ROUTE_YUK_TRENI.length()-1 && train.direction)) {
-                                        train.maintenance_remaining_time=180;
-                                        train.mode=2;
-                                        train.direction=!train.direction;
-
-                                        next_station_name=ROUTE_YUK_TRENI.charAt(train.direction?index+1:index-1);
-                                        System.out.println(next_station_name);
-                                    }
-                                    else{
-                                        System.out.println("char"+ROUTE_YUK_TRENI.charAt(train.direction?index+1:index-1));
-                                        next_station_name=ROUTE_YUK_TRENI.charAt(train.direction?index+1:index-1);
-                                        train.mode=0;
-                                    }
-                                    break;
-
-                            }
-                            for (Iterator<Rail> it = graph.getStation(train.waiting_station_name).edges.iterator(); it.hasNext(); ) {
-                                Rail rail = it.next();
-                                //System.out.println(train.name+graph.getStation(train.waiting_station_name).name+""+rail.to.name+""+next_station_name);
-                                if (rail.to.name==next_station_name) {
-                                    System.out.println("foo found");
-                                    train.remaining_rail = rail.weight;
-                                    train.rail=rail;
-                                    System.out.println(train.rail.to.name+" to");
-
-
-                                    //train.waiting_station_name = 'X';
-                                }
-                            }
-                        }
-                        else{
-
-                            train.service_remaining_time=train.service_remaining_time-1;
-                            System.out.println("bekleme"+train.service_remaining_time);
-                        }
+                        mode1(train);
                     }
 
                     else {//yolda
-
-
-                            switch (train.type){
-                                case 0:
-                                    train.remaining_rail=train.remaining_rail-(MAX_SPEED_HIZ_TRENI/60.0);
-                                    break;
-
-                                case 1:
-                                    train.remaining_rail=train.remaining_rail-(MAX_SPEED_ANAHAT_TRENI/60.0);
-                                    break;
-
-                                case 2:
-                                    train.remaining_rail=train.remaining_rail-(MAX_SPEED_YUK_TRENI/60.0);
-                                    break;
-
-
-                            }
-                        System.out.println(train.rail.to.name+" "+train.remaining_rail);
-                        if(train.remaining_rail<=0){
-                            if(train.rail.to.current_train==null){
-                                train.rail.to.current_train=train;
-                                train.waiting_station_name=train.rail.to.name;
-                                train.rail=null;
-                                train.mode=1;
-                                train.working = false;
-                                switch (train.type){
-                                    case 0:
-                                        train.service_remaining_time=15;
-                                        break;
-                                    case 1:
-                                        train.service_remaining_time=20;
-                                        break;
-
-                                    case 2:
-                                        train.service_remaining_time=0;
-                                        break;
-
-                                }
-
-                            }
-                            else {
-                                ///////////
-                            }
+                            mode0(train);
                         }
-                        }
-
                     }
-
-
             if (i%60==0){
                 System.out.println((i/60)+"-------------------------");
                 for (Train train:trains) {
@@ -276,6 +166,166 @@ public class Main {
 
     }
 
+
+
+    static void mode1(Train train){
+        if (train.service_remaining_time<=0){//yola çıkıcak
+            train.working = true;
+            graph.getStation(train.waiting_station_name).current_train = null;
+            if (train.waiting_station_name == 'P' || train.waiting_station_name == 'X') {
+                graph.getStation('P').current_train = null;
+                graph.getStation('X').current_train = null;
+            }
+            int index;
+            char next_station_name = 0;
+            switch (train.type){
+                case 0:
+                    index=ROUTE_HIZ_TRENI.indexOf(train.waiting_station_name);
+                    if ((index==0 && !train.direction) || (index==ROUTE_HIZ_TRENI.length()-1 && train.direction)){
+                        train.maintenance_remaining_time=120;
+                        train.mode=2;
+                        train.direction=!train.direction;
+                        System.out.println("mode2");
+                        next_station_name=ROUTE_HIZ_TRENI.charAt(train.direction?index+1:index-1);
+                        System.out.println(next_station_name);
+                    }
+
+                    else{
+                        System.out.println("char"+ROUTE_HIZ_TRENI.charAt(train.direction?index+1:index-1));
+                        next_station_name=ROUTE_HIZ_TRENI.charAt(train.direction?index+1:index-1);
+                        train.mode=0;
+                    }
+                    break;
+                case 1:
+                    index=ROUTE_ANAHAT_TRENI.indexOf(train.waiting_station_name);
+                    if ((index==0 && !train.direction) || (index==ROUTE_ANAHAT_TRENI.length()-1 && train.direction)) {
+                        train.maintenance_remaining_time = 240;
+                        train.mode = 2;
+                        train.direction=!train.direction;
+                        next_station_name=ROUTE_ANAHAT_TRENI.charAt(train.direction?index+1:index-1);
+                        System.out.println(next_station_name);                                    }
+                    else{
+                        System.out.println("char"+ROUTE_ANAHAT_TRENI.charAt(train.direction?index+1:index-1));
+                        next_station_name=ROUTE_ANAHAT_TRENI.charAt(train.direction?index+1:index-1);
+                        train.mode=0;
+                    }
+                    break;
+
+                case 2:
+                    index=ROUTE_YUK_TRENI.indexOf(train.waiting_station_name);
+                    if ((index==0 && !train.direction) || (index==ROUTE_YUK_TRENI.length()-1 && train.direction)) {
+                        train.maintenance_remaining_time=180;
+                        train.mode=2;
+                        train.direction=!train.direction;
+                        next_station_name=ROUTE_YUK_TRENI.charAt(train.direction?index+1:index-1);
+                        System.out.println(next_station_name);
+                    }
+                    else{
+                        System.out.println("char"+ROUTE_YUK_TRENI.charAt(train.direction?index+1:index-1));
+                        next_station_name=ROUTE_YUK_TRENI.charAt(train.direction?index+1:index-1);
+                        train.mode=0;
+                    }
+                    break;
+            }
+            for (Iterator<Rail> it = graph.getStation(train.waiting_station_name).edges.iterator(); it.hasNext(); ) {
+                Rail rail = it.next();
+                //System.out.println(train.name+graph.getStation(train.waiting_station_name).name+""+rail.to.name+""+next_station_name);
+                if (rail.to.name==next_station_name) {
+                    System.out.println("foo found");
+                    train.remaining_rail = rail.weight;
+                    train.rail=rail;
+                    System.out.println(train.rail.to.name+" to");
+                }
+            }
+        }
+        else{
+            train.service_remaining_time=train.service_remaining_time-1;
+            System.out.println("bekleme"+train.service_remaining_time);
+        }
+        switch (train.mode){
+            case 0:
+                mode0(train);
+                break;
+            case 2:
+                mode2(train);
+                break;
+        }
+    }
+    static void mode2(Train train){
+        if (train.maintenance_remaining_time<=0 && graph.getStation(train.waiting_station_name).current_train==null) {
+            train.working = true;
+            //graph.getStation(train.waiting_station_name).current_train = train;
+            int index;
+            train.mode=0;
+        }
+        else {
+            train.maintenance_remaining_time=train.maintenance_remaining_time-1;
+            System.out.println("mainbekleme"+train.maintenance_remaining_time);
+
+        }
+        switch (train.mode){
+            case 0:
+                mode0(train);
+                break;
+            case 1:
+                mode1(train);
+                break;
+        }
+    }
+    static void mode0(Train train){
+        switch (train.type){
+            case 0:
+                train.remaining_rail=train.remaining_rail-(MAX_SPEED_HIZ_TRENI/60.0);
+                break;
+            case 1:
+                train.remaining_rail=train.remaining_rail-(MAX_SPEED_ANAHAT_TRENI/60.0);
+                break;
+            case 2:
+                train.remaining_rail=train.remaining_rail-(MAX_SPEED_YUK_TRENI/60.0);
+                break;
+        }
+        System.out.println(train.rail.to.name+" "+train.remaining_rail);
+
+        if(BigDecimal.valueOf(train.remaining_rail)
+                .setScale(3, RoundingMode.HALF_UP)
+                .doubleValue()<=0){
+            if(train.rail.to.current_train==null){
+                train.rail.to.current_train=train;
+                if (train.rail.to.name == 'P' || train.rail.to.name == 'X') {
+                    graph.getStation('P').current_train = train;
+                    graph.getStation('X').current_train = train;
+                }
+                train.waiting_station_name=train.rail.to.name;
+                train.rail=null;
+                train.mode=1;
+                train.working = false;
+                switch (train.type){
+                    case 0:
+                        train.service_remaining_time=15;
+                        break;
+                    case 1:
+                        train.service_remaining_time=20;
+                        break;
+
+                    case 2:
+                        train.service_remaining_time=0;
+                        break;
+                }
+
+            }
+            else {
+                ///////////
+            }
+        }
+        /*switch (train.mode){
+            case 1:
+                mode1(train);
+                break;
+            case 2:
+                mode2(train);
+                break;
+        }*/
+    }
     static class Train{
         int type;//0hiz,1anahat,2yuk
         int mode;//0 yolda, 1 servis bekleme,2 bakım bekleme
@@ -289,6 +339,8 @@ public class Main {
         char waiting_station_name;//suanda bulunugu istasyon
         double remaining_rail;//sonraki istasyona kalan yol
         Rail rail;//suan bulundugu yol
+        Train prev;
+        Train next;
         Train(int type,String name,char start_station_name,boolean direction){
             this.type=type;
             this.name=name;
@@ -321,7 +373,6 @@ public class Main {
             return new ArrayList<>(edges);
         }
 
-        //todo override hashCode()
     }
     
     static class Rail {
@@ -356,5 +407,108 @@ public class Main {
         boolean addVertex(Station vertex){
             return vertices.add(vertex);
         }
+    }
+    private static void createGraph() {
+        Station stationA=new Station('A');
+        Station stationB=new Station('B');
+        Station stationC=new Station('C');
+        Station stationD=new Station('D');
+        Station stationE=new Station('E');
+        Station stationF=new Station('F');
+        Station stationO=new Station('O');
+
+        Station stationN=new Station('N');
+        Station stationK=new Station('K');
+        Station stationP=new Station('P');
+        Station stationR=new Station('R');
+        Station stationS=new Station('S');
+
+        Station stationG=new Station('G');
+        Station stationH=new Station('H');
+        Station stationI=new Station('I');
+        Station stationJ=new Station('J');
+        Station stationL=new Station('L');
+        Station stationX=new Station('X');
+
+
+        graph = new Graph();
+        stationA.addEdge(new Rail(stationB, 100));
+        stationB.addEdge(new Rail(stationA, 100));
+
+        stationB.addEdge(new Rail(stationC, 75));
+        stationC.addEdge(new Rail(stationB, 75));
+
+        stationC.addEdge(new Rail(stationD, 100));
+        stationD.addEdge(new Rail(stationC, 100));
+
+        stationD.addEdge(new Rail(stationE, 75));
+        stationE.addEdge(new Rail(stationD, 75));
+
+        stationE.addEdge(new Rail(stationF, 75));
+        stationF.addEdge(new Rail(stationE, 75));
+
+        stationF.addEdge(new Rail(stationO, 25));
+        stationO.addEdge(new Rail(stationF, 25));
+
+
+        stationN.addEdge(new Rail(stationK, 100));
+        stationK.addEdge(new Rail(stationN, 100));
+
+        stationK.addEdge(new Rail(stationP, 100));
+        stationP.addEdge(new Rail(stationK, 100));
+
+        stationP.addEdge(new Rail(stationR, 75));
+        stationR.addEdge(new Rail(stationP, 75));
+
+        stationD.addEdge(new Rail(stationR, 50));
+        stationR.addEdge(new Rail(stationD, 50));
+
+        stationD.addEdge(new Rail(stationS, 50));
+        stationS.addEdge(new Rail(stationD, 50));
+
+        stationS.addEdge(new Rail(stationX, 75));
+        stationX.addEdge(new Rail(stationS, 75));
+
+
+
+        stationG.addEdge(new Rail(stationH, 77));
+        stationH.addEdge(new Rail(stationG, 77));
+
+        stationH.addEdge(new Rail(stationI, 82));
+        stationI.addEdge(new Rail(stationH, 82));
+
+        stationI.addEdge(new Rail(stationF, 50));
+        stationF.addEdge(new Rail(stationI, 50));
+
+        stationF.addEdge(new Rail(stationJ, 97));
+        stationJ.addEdge(new Rail(stationF, 97));
+
+        stationJ.addEdge(new Rail(stationK, 100));
+        stationK.addEdge(new Rail(stationJ, 100));
+
+        stationK.addEdge(new Rail(stationL, 112));
+        stationL.addEdge(new Rail(stationK, 112));
+
+        graph.addVertex(stationA);
+        graph.addVertex(stationB);
+        graph.addVertex(stationC);
+        graph.addVertex(stationD);
+        graph.addVertex(stationE);
+        graph.addVertex(stationF);
+        graph.addVertex(stationO);
+
+        graph.addVertex(stationN);
+        graph.addVertex(stationK);
+        graph.addVertex(stationP);
+        graph.addVertex(stationR);
+        graph.addVertex(stationS);
+
+        graph.addVertex(stationG);
+        graph.addVertex(stationH);
+        graph.addVertex(stationI);
+        graph.addVertex(stationJ);
+        graph.addVertex(stationK);
+        graph.addVertex(stationL);
+        graph.addVertex(stationX);
     }
 }
