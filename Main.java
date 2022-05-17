@@ -1,6 +1,4 @@
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.Scanner;
+import java.util.*;
 
 public class Main {
     static int gun;
@@ -69,14 +67,53 @@ public class Main {
         for(int i=0;i<num_of_hiz_treni;i++){
             trains.add(new Train(0,"HT-"+i,'A',true));
         }
-        route.add(new Station('A',0,100));
-        route.add(new Station('B',100,75));
-        route.add(new Station('C',75,100));
-        route.add(new Station('D',100,75));
-        route.add(new Station('E',75,75));
-        route.add(new Station('F',75,25));
-        route.add(new Station('O',25,0));
 
+        Station stationA=new Station('A');
+        Station stationB=new Station('B');
+        Station stationC=new Station('C');
+        Station stationD=new Station('D');
+        Station stationE=new Station('E');
+        Station stationF=new Station('F');
+        Station stationO=new Station('O');
+
+        Graph Graph = new Graph();
+        stationA.addEdge(new Rail(stationB, 100)); //connect v1 v2
+        stationB.addEdge(new Rail(stationA, 100));
+
+        stationB.addEdge(new Rail(stationC, 75)); //connect v2 v3
+        stationC.addEdge(new Rail(stationB, 75));
+
+        stationC.addEdge(new Rail(stationD, 100)); //connect v2 v4
+        stationD.addEdge(new Rail(stationC, 100));
+
+        stationD.addEdge(new Rail(stationE, 75)); //connect v4 v5
+        stationE.addEdge(new Rail(stationD, 75));
+
+        stationE.addEdge(new Rail(stationF, 75)); //connect v4 v5
+        stationF.addEdge(new Rail(stationE, 75));
+
+        stationF.addEdge(new Rail(stationO, 25)); //connect v4 v5
+        stationO.addEdge(new Rail(stationF, 25));
+
+        Graph.addVertex(stationA);
+        Graph.addVertex(stationB);
+        Graph.addVertex(stationC);
+        Graph.addVertex(stationD);
+        Graph.addVertex(stationE);
+        Graph.addVertex(stationF);
+        Graph.addVertex(stationO);
+
+        for (Station st:Graph.getVertices()
+             ) {
+            System.out.println(st.name);
+
+            for (Rail edge : st.getEdges()) {
+                System.out.println(edge.to.name);
+                System.out.println(edge.weight);
+            }
+            System.out.println();
+
+        }
 
     }
 
@@ -97,20 +134,49 @@ public class Main {
         }
 
     }
-
-    static class Station{
+    static class Station {
         Train current_train;
         char name;
-        int prev_distance;
-        int next_distance;
-
-        Station(char name,int prev_distance, int next_distance){
+        private Set<Rail> edges; //collection of edges to neighbors
+        Station(char name){
             this.name=name;
-            this.prev_distance=prev_distance;
-            this.next_distance=next_distance;
+            edges = new HashSet<>();
             current_train=null;
         }
+        boolean addEdge(Rail edge){
+            return edges.add(edge);
+        }
+        List<Rail> getEdges() {
+            return new ArrayList<>(edges);
+        }
 
+        //todo override hashCode()
     }
+    
+    static class Rail {
+        Station to;
+        int weight;
+        public Rail(Station to, int weight) {
+            super();
+            this.to = to;
+            this.weight = weight;
+        }
+    }
+    
+    static class Graph{
 
+        private Set<Station> vertices; //collection of all verices
+
+        public Graph() {
+            vertices = new HashSet<>();
+        }
+
+        List<Station> getVertices() {
+            return new ArrayList<>(vertices);
+        }
+
+        boolean addVertex(Station vertex){
+            return vertices.add(vertex);
+        }
+    }
 }
