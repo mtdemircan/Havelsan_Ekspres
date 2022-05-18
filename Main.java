@@ -35,9 +35,12 @@ public class Main {
     static Station[] intersections;
     static Map<Station,Train> last_train_at_intersection;
     static ArrayList<Train> trains;
+    static HashMap<Train,ArrayList<State>> trains_states;
     static int time=0;
-    public static void main(String[] args) {
+    static int time_cikis;
 
+    public static void main(String[] args) {
+        trains_states=new HashMap<>();
         LinkedList<Station> route=new LinkedList<Station>();
         Scanner scanner=new Scanner(System.in);
         try{
@@ -73,7 +76,9 @@ public class Main {
         ArrayList<Train> trains_ana=new ArrayList<>();
         ArrayList<Train> trains_hiz=new ArrayList<>();
         for(int i=0;i<num_of_hiz_treni;i++){
-            trains_hiz.add(new Train(0,"HT-"+(i+1),'A',true));
+            Train temptrain=new Train(0,"HT-"+(i+1),'A',true);
+            trains_hiz.add(temptrain);
+            trains_states.put(temptrain,new ArrayList<>());
         }
         if (trains_hiz.size()>1){
             for (int i=1;i<trains_hiz.size()-1;i++){
@@ -92,7 +97,9 @@ public class Main {
 
 
         for(int i=0;i<num_of_anahat_treni;i++){
-            trains_ana.add(new Train(1,"AT-"+(i+1),'N',true));
+            Train temptrain=new Train(1,"AT-"+(i+1),'N',true);
+            trains_ana.add(temptrain);
+            trains_states.put(temptrain,new ArrayList<>());
         }
         if (trains_ana.size()>1){
             for (int i=1;i<trains_ana.size()-1;i++){
@@ -111,7 +118,9 @@ public class Main {
 
 
         for(int i=0;i<num_of_yuk_treni;i++){
-            trains_yuk.add(new Train(2,"YT-"+(i+1),'G',true));
+            Train temptrain=new Train(2,"YT-"+(i+1),'G',true);
+            trains_yuk.add(temptrain);
+            trains_states.put(temptrain,new ArrayList<>());
         }
         if (trains_yuk.size()>1){
             for (int i=1;i<trains_yuk.size()-1;i++){
@@ -170,6 +179,28 @@ public class Main {
             }
         }
 
+
+            Set entrySet = trains_states.entrySet();
+
+            Iterator it = entrySet.iterator();
+
+            while(it.hasNext()){
+                Map.Entry me = (Map.Entry)it.next();
+                ArrayList<State> as=trains_states.get(me.getKey());
+                System.out.println(as.get(0).name);
+                if(as.get(0).name.charAt(0)=='H')
+                    System.out.println("A-O Guzergahi");
+                if(as.get(0).name.charAt(0)=='Y')
+                    System.out.println("G-L Guzergahi");
+                if(as.get(0).name.charAt(0)=='A')
+                    System.out.println("N-P Guzergahi");
+                for(int i=0;i!=as.size();i++){
+
+                    System.out.println((as.get(i).varis/1440)+1+" "+as.get(i).cikis+" "+as.get(i).varis+" "+as.get(i).direction_string+" "+as.get(i).sefer_no);
+
+                }
+            }
+
     }
 
 
@@ -191,6 +222,7 @@ public class Main {
                         train.maintenance_remaining_time=120;
                         train.mode=2;
                         train.direction=!train.direction;
+                        train.sefer_no++;
                         //System.out.println("mode2");
                         next_station_name=ROUTE_HIZ_TRENI.charAt(train.direction?index+1:index-1);
                         //System.out.println(next_station_name);
@@ -208,6 +240,7 @@ public class Main {
                         train.maintenance_remaining_time = 240;
                         train.mode = 2;
                         train.direction=!train.direction;
+                        train.sefer_no++;
                         next_station_name=ROUTE_ANAHAT_TRENI.charAt(train.direction?index+1:index-1);
                         //System.out.println(next_station_name);
                         }
@@ -224,6 +257,7 @@ public class Main {
                         train.maintenance_remaining_time=180;
                         train.mode=2;
                         train.direction=!train.direction;
+                        train.sefer_no++;
                         next_station_name=ROUTE_YUK_TRENI.charAt(train.direction?index+1:index-1);
                         //System.out.println(next_station_name);
                     }
@@ -262,6 +296,8 @@ public class Main {
 
                     }
                 }
+
+                time_cikis=time;
                 mode0(train);
                 break;
             case 2:
@@ -294,6 +330,7 @@ public class Main {
 
                     }
                 }
+                time_cikis=time;
                 mode0(train);
                 break;
             case 1:
@@ -376,6 +413,7 @@ public class Main {
         if(BigDecimal.valueOf(train.remaining_rail).setScale(3, RoundingMode.HALF_UP).doubleValue()<=0){
             if(train.rail.to.current_train==null && train.rail.to.intersection_wait==0){
                 train.rail.to.current_train=train;
+                trains_states.get(train).add(new State(train.name,time,time_cikis,train.direction,train.sefer_no));
                 System.out.println(train.name+" "+train.rail.to.name+" "+time/1440+" "+(time%1440)/60+":"+(time%1440)%60);
                 if (train.rail.to.name == 'P' || train.rail.to.name == 'X') {
                     graph.getStation('P').current_train = train;
@@ -427,7 +465,10 @@ public class Main {
         Rail rail;//suan bulundugu yol
         Train prev;
         Train next;
+
+        int sefer_no=1;
         Train(int type,String name,char start_station_name,boolean direction){
+
             this.type=type;
             this.name=name;
             rail=null;
@@ -472,7 +513,42 @@ public class Main {
             this.weight = weight;
         }
     }
-    
+
+    static class State {
+        String name;
+        int varis;
+        int cikis;
+        boolean direction;
+
+        String direction_string;
+
+        int sefer_no;
+
+        public State(String name,int varis,int cikis,boolean direction,int sefer_no){
+            this.name=name;
+            this.varis=varis;
+            this.cikis=cikis;
+            this.direction=direction;
+            this.sefer_no=sefer_no;
+            if(name.charAt(0)=='H'){
+                if(direction)
+                    direction_string="A-O";
+                else direction_string="O-A";
+            }
+            if(name.charAt(0)=='A'){
+                if(direction)
+                    direction_string="N-P";
+                else direction_string="P-N";
+            }
+            if(name.charAt(0)=='Y'){
+                if(direction)
+                    direction_string="G-L";
+                else direction_string="L-G";
+            }
+        }
+
+
+    }
     static class Graph{
 
         private Set<Station> vertices; //collection of all verices
