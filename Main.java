@@ -3,6 +3,8 @@ import java.math.RoundingMode;
 import java.util.*;
 
 public class Main {
+    static int xx=0;
+    static int total_profit=0;
     static int gun;
     static int num_of_hiz_treni;
     static int num_of_yuk_treni;
@@ -16,13 +18,13 @@ public class Main {
     static final int GENERAL_MAINTENANCE_DISTANCE_ANAHAT_TRENI=2500;
     static final int GENERAL_MAINTENANCE_DISTANCE_YUK_TRENI=3000;
 
-    static final int GENERAL_MAINTENANCE_TIME_HIZ_TRENI=12;
-    static final int GENERAL_MAINTENANCE_TIME_ANAHAT_TRENI=24;
-    static final int GENERAL_MAINTENANCE_TIME_YUK_TRENI=36;
+    static final int GENERAL_MAINTENANCE_TIME_HIZ_TRENI=720;
+    static final int GENERAL_MAINTENANCE_TIME_ANAHAT_TRENI=1440;
+    static final int GENERAL_MAINTENANCE_TIME_YUK_TRENI=2160;
 
-    static final int SERVICE_MAINTENANCE_TIME_HIZ_TRENI=2;
-    static final int SERVICE_MAINTENANCE_TIME_ANAHAT_TRENI=4;
-    static final int SERVICE_MAINTENANCE_TIME_YUK_TRENI=3;
+    static final int SERVICE_MAINTENANCE_TIME_HIZ_TRENI=120;
+    static final int SERVICE_MAINTENANCE_TIME_ANAHAT_TRENI=240;
+    static final int SERVICE_MAINTENANCE_TIME_YUK_TRENI=180;
 
     static final int SERVICE_PROFIT_HIZ_TRENI=60000;
     static final int SERVICE_PROFIT_ANAHAT_TRENI=45000;
@@ -44,14 +46,14 @@ public class Main {
         LinkedList<Station> route=new LinkedList<Station>();
         Scanner scanner=new Scanner(System.in);
         try{
-            System.out.print("Hız Treni Adedi Giriniz:");
+            System.out.print("Hiz Treni Adedi Giriniz:");
             num_of_hiz_treni=Integer.parseInt(scanner.nextLine());
         }catch (NumberFormatException e){
             System.out.print("Not a number.");
             System.exit(0);
         }
         try{
-            System.out.print("Yük Treni Adedi Giriniz:");
+            System.out.print("Yuk Treni Adedi Giriniz:");
             num_of_yuk_treni=Integer.parseInt(scanner.nextLine());
         }catch (NumberFormatException e){
             System.out.print("Not a number.");
@@ -65,7 +67,7 @@ public class Main {
             System.exit(0);
         }
         try{
-            System.out.print("Kaç Günlük Sefer Planlaması İstiyorsunuz:");
+            System.out.print("Kac Gunluk Sefer Planlamasi Istiyorsunuz:");
             gun=Integer.parseInt(scanner.nextLine());
         }catch (NumberFormatException e){
             System.out.print("Not a number.");
@@ -76,7 +78,11 @@ public class Main {
         ArrayList<Train> trains_ana=new ArrayList<>();
         ArrayList<Train> trains_hiz=new ArrayList<>();
         for(int i=0;i<num_of_hiz_treni;i++){
-            Train temptrain=new Train(0,"HT-"+(i+1),'A',true);
+            Train temptrain;
+            if (i<num_of_hiz_treni/2)
+                temptrain=new Train(0,"HT-"+(i+1),'A',true);
+            else
+                temptrain=new Train(0,"HT-"+(i+1),'O',false);
             trains_hiz.add(temptrain);
             trains_states.put(temptrain,new ArrayList<>());
         }
@@ -97,7 +103,12 @@ public class Main {
 
 
         for(int i=0;i<num_of_anahat_treni;i++){
-            Train temptrain=new Train(1,"AT-"+(i+1),'N',true);
+            Train temptrain;
+            if (i<num_of_hiz_treni/2)
+                temptrain=new Train(1,"AT-"+(i+1),'N',true);
+            else
+                temptrain=new Train(1,"AT-"+(i+1),'X',false);
+
             trains_ana.add(temptrain);
             trains_states.put(temptrain,new ArrayList<>());
         }
@@ -118,7 +129,12 @@ public class Main {
 
 
         for(int i=0;i<num_of_yuk_treni;i++){
-            Train temptrain=new Train(2,"YT-"+(i+1),'G',true);
+            Train temptrain;
+            if (i<num_of_hiz_treni/2)
+                temptrain=new Train(2,"YT-"+(i+1),'G',true);
+            else
+                temptrain=new Train(2,"YT-"+(i+1),'L',false);
+
             trains_yuk.add(temptrain);
             trains_states.put(temptrain,new ArrayList<>());
         }
@@ -143,16 +159,59 @@ public class Main {
         createGraph();
 
 
-        for (Station st:graph.getVertices()
-             ) {
-            System.out.println(st.name);
-            for (Rail edge : st.getEdges()) {
-                System.out.println(edge.to.name);
-                System.out.println(edge.weight);
+
+        int max_num=Math.max(num_of_anahat_treni,Math.max(num_of_hiz_treni,num_of_yuk_treni));
+        for (time=0;time<max_num;time++){
+            for (int j=0;j<time;j++) {
+                try {
+                    Train train=trains_hiz.get(j);
+                    if(train.mode==2 ){
+                        mode2(train);
+                    } else if (train.mode==1) {
+                        mode1(train);
+                    }
+                    else {//yolda
+                        mode0(train);
+                    }
+                }catch (Exception e){
+
+                }
+                try {
+                    Train train=trains_ana.get(j);
+                    if(train.mode==2 ){
+                        mode2(train);
+                    } else if (train.mode==1) {
+                        mode1(train);
+                    }
+                    else {//yolda
+                        mode0(train);
+                    }
+                }catch (Exception e){
+
+                }
+                try {
+                    Train train=trains_yuk.get(j);
+                    if(train.mode==2 ){
+                        mode2(train);
+                    } else if (train.mode==1) {
+                        mode1(train);
+                    }
+                    else {//yolda
+                        mode0(train);
+                    }
+                }catch (Exception e){
+
+                }
+
+
+
             }
-            System.out.println();
+            for (Station st:intersections) {
+                if(st.intersection_wait!=0)
+                    st.intersection_wait=st.intersection_wait-1;
+            }
         }
-        for (time=0;time<gun*24*60;time++){
+        for (;time<gun*24*60;time++){
             for (Train train:trains) {
                     if(train.mode==2 ){
                         mode2(train);
@@ -164,42 +223,84 @@ public class Main {
                             mode0(train);
                         }
                     }
-            /*if (time%60==0){
-                System.out.println((time/60)+"-------------------------");
-                for (Train train:trains) {
-                    System.out.println(train.name);
-                    System.out.println(train.waiting_station_name);
-                    System.out.println(train.rail+"\n");
-                }
-
-            }*/
             for (Station st:intersections) {
                 if(st.intersection_wait!=0)
                     st.intersection_wait=st.intersection_wait-1;
             }
         }
 
+        System.out.println(xx);
+        System.out.println(total_profit);
 
-            Set entrySet = trains_states.entrySet();
+        Set entrySet = trains_states.entrySet();
 
-            Iterator it = entrySet.iterator();
+        System.out.println("***************************");
+        for (Station st:graph.vertices) {
+            System.out.println(st.name);
+            for (State state:st.states) {
+                int varis_saat=(state.varis%1440)/60;
+                int varis_dakika=(state.varis%1440)%60;
+                int cikis_saat=(state.cikis%1440)/60;
+                int cikis_dakika=(state.cikis%1440)%60;
+                System.out.println(st.name+" "+(state.varis/1440)+1+" "+(varis_saat<10?"0"+varis_saat:varis_saat)+":"+(varis_dakika<10?"0"+varis_dakika:varis_dakika)+" "+(cikis_saat<10?"0"+cikis_saat:cikis_saat)+":"+(cikis_dakika<10?"0"+cikis_dakika:cikis_dakika)+" "+state.train.name+" "+state.direction_string);
 
-            while(it.hasNext()){
-                Map.Entry me = (Map.Entry)it.next();
-                ArrayList<State> as=trains_states.get(me.getKey());
-                System.out.println(as.get(0).name);
-                if(as.get(0).name.charAt(0)=='H')
-                    System.out.println("A-O Guzergahi");
-                if(as.get(0).name.charAt(0)=='Y')
-                    System.out.println("G-L Guzergahi");
-                if(as.get(0).name.charAt(0)=='A')
-                    System.out.println("N-P Guzergahi");
-                for(int i=0;i!=as.size();i++){
+            }
+        }
 
-                    System.out.println((as.get(i).varis/1440)+1+" "+as.get(i).cikis+" "+as.get(i).varis+" "+as.get(i).direction_string+" "+as.get(i).sefer_no);
+        System.out.println("***************************");
+        ArrayList<State> allStates=new ArrayList<>();
+
+        for (Station st:graph.vertices) {
+            allStates.addAll(st.states);
+        }
+        HashMap<Train,ArrayList<State>> table1=new HashMap<>();
+        HashMap<Train,HashMap<Integer,ArrayList<State>>> table11=new HashMap<>();
+
+        for (Train train:trains) {
+
+            table1.put(train,new ArrayList<>());
+            table11.put(train,new HashMap<>());
+        }
+        for (State st:allStates) {
+            table1.get(st.train).add(st);
+        }
+
+        for (Iterator<Map.Entry<Train, ArrayList<State>>> it = table1.entrySet().iterator(); it.hasNext();) {
+            Map.Entry<Train, ArrayList<State>> entry= it.next();
+            ArrayList<State> states =entry.getValue();
+            for (int i=1;i<entry.getKey().sefer_no+1;i++){
+
+                        table11.get(entry.getKey()).put(i,new ArrayList<>());
+
+            }
+            for (int i=1;i<entry.getKey().sefer_no+1;i++){
+                for (State st:states) {
+                    if (st.sefer_no==i){
+                        table11.get(entry.getKey()).get(i).add(st);
+                    }
+                }
+            }
+
+        }
+        for (Iterator<Map.Entry<Train, HashMap<Integer, ArrayList<State>>>> it = table11.entrySet().iterator(); it.hasNext();) {
+            Map.Entry<Train, HashMap<Integer, ArrayList<State>>> next=it.next();
+            for (Iterator<Map.Entry<Integer, ArrayList<State>>> it2 = next.getValue().entrySet().iterator(); it2.hasNext();){
+                Map.Entry<Integer, ArrayList<State>> entry= it2.next();
+                ArrayList<State> states =entry.getValue();
+                Collections.sort(states);
+                for (State state:states) {
+                    int varis_saat=(state.varis%1440)/60;
+                    int varis_dakika=(state.varis%1440)%60;
+                    int cikis_saat=(state.cikis%1440)/60;
+                    int cikis_dakika=(state.cikis%1440)%60;
+                    System.out.println(state.sefer_no+" " +state.station.name+" "+(state.varis/1440)+1+" "+(varis_saat<10?"0"+varis_saat:varis_saat)+":"+(varis_dakika<10?"0"+varis_dakika:varis_dakika)+" "+(cikis_saat<10?"0"+cikis_saat:cikis_saat)+":"+(cikis_dakika<10?"0"+cikis_dakika:cikis_dakika)+" "+state.train.name+" "+state.direction_string);
 
                 }
             }
+
+
+        }
+
 
     }
 
@@ -208,7 +309,7 @@ public class Main {
     static void mode1(Train train){
         if (train.service_remaining_time<=0){//yola çıkıcak
             train.working = true;
-            graph.getStation(train.waiting_station_name).current_train = null;
+            graph.getStation(train.waiting_station_name).current_train=null;
             if (train.waiting_station_name == 'P' || train.waiting_station_name == 'X') {
                 graph.getStation('P').current_train = null;
                 graph.getStation('X').current_train = null;
@@ -219,33 +320,32 @@ public class Main {
                 case 0:
                     index=ROUTE_HIZ_TRENI.indexOf(train.waiting_station_name);
                     if ((index==0 && !train.direction) || (index==ROUTE_HIZ_TRENI.length()-1 && train.direction)){
-                        train.maintenance_remaining_time=120;
+                        train.maintenance_remaining_time=SERVICE_MAINTENANCE_TIME_HIZ_TRENI;
+                        total_profit+=SERVICE_PROFIT_HIZ_TRENI;
                         train.mode=2;
                         train.direction=!train.direction;
                         train.sefer_no++;
-                        //System.out.println("mode2");
                         next_station_name=ROUTE_HIZ_TRENI.charAt(train.direction?index+1:index-1);
-                        //System.out.println(next_station_name);
                     }
 
                     else{
-                        //System.out.println("char"+ROUTE_HIZ_TRENI.charAt(train.direction?index+1:index-1));
                         next_station_name=ROUTE_HIZ_TRENI.charAt(train.direction?index+1:index-1);
+
                         train.mode=0;
                     }
                     break;
                 case 1:
                     index=ROUTE_ANAHAT_TRENI.indexOf(train.waiting_station_name);
                     if ((index==0 && !train.direction) || (index==ROUTE_ANAHAT_TRENI.length()-1 && train.direction)) {
-                        train.maintenance_remaining_time = 240;
+                        train.maintenance_remaining_time = SERVICE_MAINTENANCE_TIME_ANAHAT_TRENI;
+                        total_profit+=SERVICE_PROFIT_ANAHAT_TRENI;
+
                         train.mode = 2;
                         train.direction=!train.direction;
                         train.sefer_no++;
                         next_station_name=ROUTE_ANAHAT_TRENI.charAt(train.direction?index+1:index-1);
-                        //System.out.println(next_station_name);
                         }
                     else{
-                        //System.out.println("char"+ROUTE_ANAHAT_TRENI.charAt(train.direction?index+1:index-1));
                         next_station_name=ROUTE_ANAHAT_TRENI.charAt(train.direction?index+1:index-1);
                         train.mode=0;
                     }
@@ -254,15 +354,15 @@ public class Main {
                 case 2:
                     index=ROUTE_YUK_TRENI.indexOf(train.waiting_station_name);
                     if ((index==0 && !train.direction) || (index==ROUTE_YUK_TRENI.length()-1 && train.direction)) {
-                        train.maintenance_remaining_time=180;
+                        train.maintenance_remaining_time=SERVICE_MAINTENANCE_TIME_YUK_TRENI;
+                        total_profit+=SERVICE_PROFIT_YUK_TRENI;
+
                         train.mode=2;
                         train.direction=!train.direction;
                         train.sefer_no++;
                         next_station_name=ROUTE_YUK_TRENI.charAt(train.direction?index+1:index-1);
-                        //System.out.println(next_station_name);
                     }
                     else{
-                        //System.out.println("char"+ROUTE_YUK_TRENI.charAt(train.direction?index+1:index-1));
                         next_station_name=ROUTE_YUK_TRENI.charAt(train.direction?index+1:index-1);
                         train.mode=0;
                     }
@@ -270,18 +370,61 @@ public class Main {
             }
             for (Iterator<Rail> it = graph.getStation(train.waiting_station_name).edges.iterator(); it.hasNext(); ) {
                 Rail rail = it.next();
-                //System.out.println(train.name+graph.getStation(train.waiting_station_name).name+""+rail.to.name+""+next_station_name);
                 if (rail.to.name==next_station_name) {
-                    //System.out.println("foo found");
                     train.remaining_rail = rail.weight;
                     train.rail=rail;
-                    //System.out.println(train.rail.to.name+" to");
                 }
+            }
+            switch (train.type){
+                case 0:
+                    if (train.distance+train.rail.weight > GENERAL_MAINTENANCE_DISTANCE_HIZ_TRENI*80/100){
+                        for (Train train2:trains) {
+                            if (train2.type != train.type && train2.rail.to.name==train.rail.to.name){
+                                train.distance=0;
+                                train.mode=2;
+                                train.maintenance_remaining_time+=GENERAL_MAINTENANCE_TIME_HIZ_TRENI;
+                            }
+                        }
+                    }
+                    else if (train.distance+train.rail.weight > GENERAL_MAINTENANCE_DISTANCE_HIZ_TRENI){
+                        train.distance=0;
+                        train.mode=2;
+                        train.maintenance_remaining_time+=GENERAL_MAINTENANCE_TIME_HIZ_TRENI;
+                    }
+                case 1:
+                    if (train.distance+train.rail.weight > GENERAL_MAINTENANCE_DISTANCE_HIZ_TRENI*80/100){
+                        for (Train train2:trains) {
+                            if (train2.type != train.type && train2.rail.to.name==train.rail.to.name){
+                                train.distance=0;
+                                train.mode=2;
+                                train.maintenance_remaining_time+=GENERAL_MAINTENANCE_TIME_HIZ_TRENI;
+                            }
+                        }
+                    }
+                    else if (train.distance+train.rail.weight > GENERAL_MAINTENANCE_DISTANCE_ANAHAT_TRENI){
+                        train.distance=0;
+                        train.mode=2;
+                        train.maintenance_remaining_time+=GENERAL_MAINTENANCE_TIME_ANAHAT_TRENI;
+                    }
+                case 2:
+                    if (train.distance+train.rail.weight > GENERAL_MAINTENANCE_DISTANCE_HIZ_TRENI*80/100){
+                        for (Train train2:trains) {
+                            if (train2.type != train.type && train2.rail.to.name==train.rail.to.name){
+                                train.distance=0;
+                                train.mode=2;
+                                train.maintenance_remaining_time+=GENERAL_MAINTENANCE_TIME_HIZ_TRENI;
+                            }
+                        }
+                    }
+                    else if (train.distance+train.rail.weight > GENERAL_MAINTENANCE_DISTANCE_YUK_TRENI){
+                        train.distance=0;
+                        train.mode=2;
+                        train.maintenance_remaining_time+=GENERAL_MAINTENANCE_TIME_YUK_TRENI;
+                    }
             }
         }
         else{
             train.service_remaining_time=train.service_remaining_time-1;
-            //System.out.println("bekleme"+train.service_remaining_time);
         }
         switch (train.mode){
             case 0:
@@ -297,8 +440,7 @@ public class Main {
                     }
                 }
 
-                time_cikis=time;
-                mode0(train);
+                graph.getStation(train.waiting_station_name).train_exited(train);
                 break;
             case 2:
                 mode2(train);
@@ -314,7 +456,6 @@ public class Main {
         }
         else {
             train.maintenance_remaining_time=train.maintenance_remaining_time-1;
-            //System.out.println("mainbekleme"+train.maintenance_remaining_time);
 
         }
         switch (train.mode){
@@ -329,13 +470,16 @@ public class Main {
                         last_train_at_intersection.put(graph.getStation('X'),train);
 
                     }
+
                 }
+                graph.getStation(train.waiting_station_name).train_exited(train);
+
                 time_cikis=time;
+                trains_states.get(train).add(new State(train,train.entry_time,time,train.direction,train.sefer_no,graph.getStation(train.waiting_station_name)));
+
                 mode0(train);
                 break;
-            case 1:
-                mode1(train);
-                break;
+
         }
     }
     static void mode0(Train train){
@@ -362,22 +506,9 @@ public class Main {
             if( train.rail.to.intersection_wait!=0){
                 double temp_speed=train.remaining_rail/train.rail.to.intersection_wait;
                 max_speed= Math.min(max_speed, temp_speed);
-                //System.out.println(max_speed+" inter");
             }
         }
         else {
-            double temp_speed=Math.min(train.remaining_rail, train.rail.to.current_train.prev.remaining_rail)/train.rail.to.current_train.service_remaining_time;
-            max_speed= Math.min(max_speed, temp_speed);
-            /*System.out.println(max_speed+" 1");
-            System.out.println(train.name);
-            System.out.println(train.rail.to.current_train.name);
-            System.out.println(train.rail.to.current_train.prev.name);
-
-            System.out.println(train.remaining_rail);
-            System.out.println(train.rail.to.current_train.prev.remaining_rail);
-
-            System.out.println(Math.min(train.remaining_rail, train.rail.to.current_train.prev.remaining_rail));
-            System.out.println(train.rail.to.current_train.service_remaining_time);*/
 
             double length=112;
             Train closest=train;
@@ -388,35 +519,35 @@ public class Main {
                     closest=tr;
                 }
             }
-            temp_speed=closest.remaining_rail/train.rail.to.current_train.service_remaining_time;
-            //System.out.println(closest.name);
+            double temp_speed=closest.remaining_rail/train.rail.to.current_train.service_remaining_time;
 
             max_speed= Math.min(max_speed, temp_speed);
-            //System.out.println(max_speed+" 2");
 
 
         }
-        /*if (train.next.rail!=null && train.next.rail.to.name == train.rail.to.name && train.remaining_rail-train.next.remaining_rail<1 ){
+
+        if (train.next.rail!=null && !train.next.name.equals(train.name) && train.next.rail.to.name == train.rail.to.name && train.remaining_rail-train.next.remaining_rail<1 && train.remaining_rail-train.next.remaining_rail>-1 ){
             train.remaining_rail=train.next.remaining_rail+1;
+
+        }
+        else if (train.rail.to.current_train!=null &&train.remaining_rail<=1){
+            train.remaining_rail=1;
+
         }
         else {
+
             train.remaining_rail=train.remaining_rail-(max_speed);
-        }*/
-        //System.out.println(train.rail.to.name+" "+train.remaining_rail);
-        if (train.rail.to.current_train!=null &&train.remaining_rail<=1)
-            train.remaining_rail=1;
-        else
-            train.remaining_rail=train.remaining_rail-(max_speed);
-        /*System.out.println(train.name+" speed "+max_speed);
-        System.out.println(train.name+" remain "+train.remaining_rail);*/
+        }
 
         if(BigDecimal.valueOf(train.remaining_rail).setScale(3, RoundingMode.HALF_UP).doubleValue()<=0){
             if(train.rail.to.current_train==null && train.rail.to.intersection_wait==0){
-                train.rail.to.current_train=train;
-                trains_states.get(train).add(new State(train.name,time,time_cikis,train.direction,train.sefer_no));
-                System.out.println(train.name+" "+train.rail.to.name+" "+time/1440+" "+(time%1440)/60+":"+(time%1440)%60);
+                train.rail.to.train_entered(train);
+                train.distance+=train.rail.weight;
+                train.entry_time=time;
+                //trains_states.get(train).add(new State(train.name,time,time_cikis,train.direction,train.sefer_no));
+                xx++;
                 if (train.rail.to.name == 'P' || train.rail.to.name == 'X') {
-                    graph.getStation('P').current_train = train;
+                    graph.getStation('P').train_entered(train);
                     graph.getStation('X').current_train = train;
                 }
                 train.waiting_station_name=train.rail.to.name;
@@ -451,6 +582,8 @@ public class Main {
         }*/
     }
     static class Train{
+        int entry_time=0;
+        int station_entry_time=0;
         int type;//0hiz,1anahat,2yuk
         int mode;//0 yolda, 1 servis bekleme,2 bakım bekleme
         int service_remaining_time;//istasyondayken kalan zaman
@@ -487,9 +620,11 @@ public class Main {
     static class Station {
         Train current_train;
         char name;
+        ArrayList<State> states;
         int intersection_wait;
         private Set<Rail> edges; //collection of edges to neighbors
         Station(char name){
+            states=new ArrayList<>();
             intersection_wait=0;
             this.name=name;
             edges = new HashSet<>();
@@ -497,6 +632,15 @@ public class Main {
         }
         boolean addEdge(Rail edge){
             return edges.add(edge);
+        }
+        void train_entered(Train train){
+            this.current_train=train;
+            train.station_entry_time=time;
+
+        }
+        void train_exited(Train train){
+            states.add(new State(train,train.station_entry_time,time, train.direction, train.sefer_no,this));
+            current_train=null;
         }
         List<Rail> getEdges() {
             return new ArrayList<>(edges);
@@ -514,9 +658,10 @@ public class Main {
         }
     }
 
-    static class State {
-        String name;
+    static class State implements Comparable<State>{
+        Train train;
         int varis;
+        Station station;
         int cikis;
         boolean direction;
 
@@ -524,23 +669,24 @@ public class Main {
 
         int sefer_no;
 
-        public State(String name,int varis,int cikis,boolean direction,int sefer_no){
-            this.name=name;
+        public State(Train train,int varis,int cikis,boolean direction,int sefer_no,Station station){
+            this.station=station;
+            this.train=train;
             this.varis=varis;
             this.cikis=cikis;
             this.direction=direction;
             this.sefer_no=sefer_no;
-            if(name.charAt(0)=='H'){
+            if(train.name.charAt(0)=='H'){
                 if(direction)
                     direction_string="A-O";
                 else direction_string="O-A";
             }
-            if(name.charAt(0)=='A'){
+            if(train.name.charAt(0)=='A'){
                 if(direction)
                     direction_string="N-P";
                 else direction_string="P-N";
             }
-            if(name.charAt(0)=='Y'){
+            if(train.name.charAt(0)=='Y'){
                 if(direction)
                     direction_string="G-L";
                 else direction_string="L-G";
@@ -548,6 +694,19 @@ public class Main {
         }
 
 
+        @Override
+        public int compareTo(State o) {
+            if(o == null) {
+                return 1;
+            } else if(train.name == null) {
+                return 0;
+            } else {
+                if (cikis<o.cikis)
+                    return 1;
+                else
+                    return -1;
+            }
+        }
     }
     static class Graph{
 
